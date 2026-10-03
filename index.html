@@ -1,0 +1,38 @@
+<script src="/socket.io/socket.io.js"></script>
+const socket = io();
+let otherPlayers = {};
+
+// 進入遊戲時發送角色資訊
+function startGame() {
+  // ... 保留原有畫面切換 ...
+  socket.emit('playerJoin', {
+    name: player.name,
+    gender: player.gender,
+    job: player.job,
+    title: player.cosmetics.title
+  });
+}
+
+// 接收其他玩家動態
+socket.on('updatePlayers', (serverPlayers) => {
+  delete serverPlayers[socket.id]; // 排除自己
+  otherPlayers = serverPlayers;
+});
+
+socket.on('playerMoved', (p) => {
+  if (p.id !== socket.id) {
+    otherPlayers[p.id] = p;
+  }
+});
+
+// 移動時每幀或節流發送座標
+function onPlayerMove() {
+  socket.emit('playerMove', { x: player.x, y: player.y, facing: player.facing });
+}
+
+// 在 drawWorld() 裡繪製其他玩家
+function drawOtherPlayers() {
+  Object.values(otherPlayers).forEach(op => {
+    drawPlayer(op.x, op.y, op);
+  });
+}
